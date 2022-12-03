@@ -1,13 +1,11 @@
-<p align="center"><a href="https://dataease.io"><img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/dataease-logo.png" alt="DataEase" width="300" /></a></p>
-<h3 align="center">人人可用的开源数据可视化分析工具</h3>
-<p align="center">
-  <a href="https://www.gnu.org/licenses/old-licenses/gpl-3.0"><img src="https://img.shields.io/github/license/dataease/dataease?color=%231890FF" alt="License: GPL v3"></a>
-  <a href="https://app.codacy.com/gh/dataease/dataease?utm_source=github.com&utm_medium=referral&utm_content=dataease/dataease&utm_campaign=Badge_Grade_Dashboard"><img src="https://app.codacy.com/project/badge/Grade/da67574fd82b473992781d1386b937ef" alt="Codacy"></a>
-  <a href="https://github.com/dataease/dataease/releases/latest"><img src="https://img.shields.io/github/v/release/dataease/dataease" alt="Latest release"></a>
-  <a href="https://github.com/dataease/dataease"><img src="https://img.shields.io/github/stars/dataease/dataease?color=%231890FF&style=flat-square" alt="Stars"></a>
+## 说明
+这是个人阅读dataease源码的笔记，代码里增加注释
 
-</p>
-<hr/>
+
+## 官方连接
+github 搜索 dataease
+
+
 
 ## 什么是 DataEase？
 
@@ -29,85 +27,4 @@ DataEase 是开源的数据可视化分析工具，帮助用户快速分析数�
 -   秒级响应：集成 Apache Doris，超大数据量下秒级查询返回延时；
 -   安全分享：支持多种数据分享方式，确保数据安全。
 
-## DataEase 支持的数据源
-
-<p align="center">
-  <img src="https://dataease.io/images/dataSource/excel.jpg" alt="excel" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/mysql.png" alt="mysql" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/oracle.jpg" alt="oracle" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/sqlservel.jpg" alt="sqlserver" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/mariadb.jpg" alt="mariadb" border="0" width="155" height="107"/>  
-  <img src="https://dataease.io/images/dataSource/elasticsearch.jpg" alt="elasticsearch" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/clickhouse.jpg" alt="clickhouse" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/doris.jpg" alt="doris" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/mongodb.jpg" alt="mongodb" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/redshift.jpg" alt="redshift" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/hive.png" alt="hive" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/DB2.jpg" alt="DB2" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/API.jpg" alt="API" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/TiDB.jpg" alt="TiDB" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/StarRocks.jpg" alt="StarRocks" border="0" width="155" height="107"/>
-  <img src="https://dataease.io/images/dataSource/PrestoDB.jpg" alt="PrestoDB" border="0" width="155" height="107"/>
-</p>
-
-> 更多数据源支持持续增加中...
-
-## DataEase 模板市场
-
--   [模板市场](https://dataease.io/templates/)
-
-![模板市场](https://dataease.io/images/templates/templates.gif)
-
-> 更多优质模板持续增加中...
-
-## 快速开始
-
-**在线体验**
-
--   环境地址：<https://dataease.fit2cloud.com/>
--   用户名：demo
--   密码：dataease
-
-**一键安装**
-
-仅需两步快速安装 DataEase：
-
-1. 准备一台不小于 8 G内存的 64位 Linux 主机；
-2. 以 root 用户执行如下命令一键安装 DataEase。
-
-```sh
-curl -sSL https://github.com/dataease/dataease/releases/latest/download/quick_start.sh | sh
-```
-
-**学习资料**
-
--   [在线文档](https://dataease.io/docs/)
--   [教学视频](https://dataease.io/video.html)
--   [在线学习班](https://edu.fit2cloud.com/page/2635362?navIndex=0)
-
-**加入微信交流群**
-
-<img src="https://dataease.oss-cn-hangzhou.aliyuncs.com/img/wechat-group.png" width="156" height="156"/>
-
-## DataEase 的技术栈
-
--   前端：[Vue.js](https://vuejs.org/)、[Element](https://element.eleme.cn/)
--   图库：[Apache ECharts](https://github.com/apache/echarts)、[AntV](https://antv.vision/zh)
--   后端：[Spring Boot](https://spring.io/projects/spring-boot)
--   中间件：[MySQL](https://www.mysql.com/)
--   数据处理：[Kettle](https://github.com/pentaho/pentaho-kettle)、[Apache Doris](https://github.com/apache/incubator-doris/)
--   基础设施：[Docker](https://www.docker.com/)
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=dataease/dataease&type=Date)](https://star-history.com/#dataease/dataease&Date)
-
-## License
-
-Copyright (c) 2014-2022 飞致云 FIT2CLOUD, All rights reserved.
-
-Licensed under The GNU General Public License version 3 (GPLv3)  (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at
-
-<https://www.gnu.org/licenses/gpl-3.0.html>
-
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+## 官方连接
