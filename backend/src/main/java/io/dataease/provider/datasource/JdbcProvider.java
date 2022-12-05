@@ -272,6 +272,7 @@ public class JdbcProvider extends DefaultJdbcProvider {
         while (rs.next()) {
             String[] row = new String[columnCount];
             for (int j = 0; j < columnCount; j++) {
+                //解析字段类型，设置mapping值
                 int columnType = metaData.getColumnType(j + 1);
                 switch (columnType) {
                     case Types.DATE:
@@ -338,9 +339,14 @@ public class JdbcProvider extends DefaultJdbcProvider {
     @Override
     public List<String[]> getData(DatasourceRequest dsr) throws Exception {
         List<String[]> list = new LinkedList<>();
+        //获取jdbc配置
         JdbcConfiguration jdbcConfiguration = new Gson().fromJson(dsr.getDatasource().getConfiguration(), JdbcConfiguration.class);
         int queryTimeout = jdbcConfiguration.getQueryTimeout() > 0 ? jdbcConfiguration.getQueryTimeout() : 0;
-        try (Connection connection = getConnectionFromPool(dsr); Statement stat = getStatement(connection, queryTimeout); ResultSet rs = stat.executeQuery(dsr.getQuery())) {
+        //执行sql 查询
+        try (Connection connection = getConnectionFromPool(dsr);
+             Statement stat = getStatement(connection, queryTimeout);
+             ResultSet rs = stat.executeQuery(dsr.getQuery())) {
+            //解析数据查询结果
             list = getDataResult(rs, dsr);
             if (dsr.isPageable() && (dsr.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.sqlServer.name()) || dsr.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.db2.name()))) {
                 Integer realSize = dsr.getPage() * dsr.getPageSize() < list.size() ? dsr.getPage() * dsr.getPageSize() : list.size();

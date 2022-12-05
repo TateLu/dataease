@@ -857,6 +857,7 @@ public class ChartViewService {
         DatasourceRequest datasourceRequest = new DatasourceRequest();
         Datasource ds = table.getMode() == 0 ? datasourceService.get(table.getDataSourceId()) : engineService.getDeEngine();
         datasourceRequest.setDatasource(ds);
+        //获取数据源
         Provider datasourceProvider = ProviderFactory.getProvider(ds.getType());
         List<String[]> data = new ArrayList<>();
 
@@ -889,6 +890,7 @@ public class ChartViewService {
                 return emptyChartViewDTO(view);
             }
             datasourceRequest.setQuery(sql);
+            //读取数据集
             data = datasourceProvider.getData(datasourceRequest);
 
             Map<String, Object> mapChart = pluginViewResult(pluginViewParam, view, data, isDrill);
