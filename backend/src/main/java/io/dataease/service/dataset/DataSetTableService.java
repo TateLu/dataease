@@ -2353,6 +2353,7 @@ public class DataSetTableService {
         return excelFileData;
     }
 
+    //解析不同类型文件，返回文件内容
     private List<ExcelSheetData> parseExcel(String filename, InputStream inputStream, boolean isPreview)
             throws Exception {
         List<ExcelSheetData> excelSheetDataList = new ArrayList<>();
