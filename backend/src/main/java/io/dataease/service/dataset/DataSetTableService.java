@@ -167,6 +167,9 @@ public class DataSetTableService {
         return list;
     }
 
+    /**
+     * 定时任务抽取数据
+     * */
     private void extractData(DataSetTableRequest datasetTable) throws Exception {
         if (datasetTable.getMode() == 1 && StringUtils.isNotEmpty(datasetTable.getSyncType())
                 && datasetTable.getSyncType().equalsIgnoreCase("sync_now")) {

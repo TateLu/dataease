@@ -92,6 +92,9 @@ public class ChartViewController {
     @PostMapping("/getData/{id}/{panelId}")
     public ChartViewDTO getData(@PathVariable String id, @PathVariable String panelId,
                                 @RequestBody ChartExtRequest requestList) throws Exception {
+        if(id.equals("aa2b2ab3-1392-4410-9c59-4047e566d74a")){
+            return chartViewService.getData(id, requestList);
+        }
         return chartViewService.getData(id, requestList);
     }
 
