@@ -283,6 +283,9 @@ public class DatasourceService {
         }
     }
 
+    /**
+     * 校验数据源信息
+     * */
     public ResultHolder validate(Datasource datasource) throws Exception {
         DatasourceDTO datasourceDTO = new DatasourceDTO();
         BeanUtils.copyBean(datasourceDTO, datasource);

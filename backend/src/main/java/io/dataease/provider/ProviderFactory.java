@@ -13,6 +13,9 @@ import io.dataease.plugins.datasource.provider.Provider;
 
 import java.util.Map;
 
+/**
+ * 按照不同的数据源类型，返回其实现
+ * */
 @Configuration
 public class ProviderFactory implements ApplicationContextAware {
 

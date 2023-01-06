@@ -152,6 +152,23 @@ public class MysqlQueryProvider extends QueryProvider {
 
     }
 
+    /**
+     * 依据不同数据库类型，将SQL格式化
+     *
+     * for example:
+     * 将 ‘province_name’ 转为数值类型
+     * SELECT
+     *     CAST(t_a_0.`id` AS DECIMAL(20,0)) AS f_ax_0,
+     *     CAST(t_a_0.`province_name` AS DECIMAL(20,0)) AS f_ax_1,
+     *     t_a_0.`province_code` AS f_ax_2,
+     *     t_a_0.`city_name` AS f_ax_3,
+     *     t_a_0.`city_code` AS f_ax_4,
+     *     t_a_0.`county_name` AS f_ax_5,
+     *     t_a_0.`county_code` AS f_ax_6
+     * FROM
+     *     `area_mapping`   t_a_0
+     *
+     * */
     @Override
     public String createQuerySQL(String table, List<DatasetTableField> fields, boolean isGroup, Datasource ds, List<ChartFieldCustomFilterDTO> fieldCustomFilter, List<DataSetRowPermissionsTreeDTO> rowPermissionsTree, List<DeSortField> sortFields) {
         SQLObj tableObj = SQLObj.builder()

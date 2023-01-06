@@ -567,6 +567,7 @@ public class DataSetTableService {
         String syncStatus = "";
         DatasetTableField datasetTableField = DatasetTableField.builder().tableId(dataSetTableRequest.getId())
                 .checked(Boolean.TRUE).build();
+        //取出表的字段
         List<DatasetTableField> fields = dataSetTableFieldsService.list(datasetTableField);
         if (CollectionUtils.isNotEmpty(extFields)) {
             fields = extFields;
@@ -597,7 +598,7 @@ public class DataSetTableService {
         }
 
         String[] fieldArray = fields.stream().map(DatasetTableField::getDataeaseName).toArray(String[]::new);
-
+        //解析json信息，获取表信息
         DataTableInfoDTO dataTableInfoDTO = new Gson().fromJson(dataSetTableRequest.getInfo(), DataTableInfoDTO.class);
 
         List<String[]> data = new ArrayList<>();
@@ -611,7 +612,10 @@ public class DataSetTableService {
         if (page == Integer.parseInt(dataSetTableRequest.getRow()) / pageSize + 1) {
             realSize = Integer.parseInt(dataSetTableRequest.getRow()) % pageSize;
         }
-        if (StringUtils.equalsIgnoreCase(datasetTable.getType(), DatasetType.DB.name()) || StringUtils.equalsIgnoreCase(datasetTable.getType(), DatasetType.API.name())) {
+        //区分不同的数据集类型
+        //DB API类型
+        if (StringUtils.equalsIgnoreCase(datasetTable.getType(), DatasetType.DB.name())
+                || StringUtils.equalsIgnoreCase(datasetTable.getType(), DatasetType.API.name())) {
             if (datasetTable.getMode() == 0) {
                 Datasource ds = datasourceMapper.selectByPrimaryKey(dataSetTableRequest.getDataSourceId());
                 if (ObjectUtils.isEmpty(ds)) {
@@ -620,12 +624,15 @@ public class DataSetTableService {
                 if (StringUtils.isNotEmpty(ds.getStatus()) && ds.getStatus().equalsIgnoreCase("Error")) {
                     throw new Exception(Translator.get("i18n_invalid_ds"));
                 }
+                //区分不同数据源类型
                 Provider datasourceProvider = ProviderFactory.getProvider(ds.getType());
+
                 DatasourceRequest datasourceRequest = new DatasourceRequest();
                 datasourceRequest.setDatasource(ds);
                 String table = dataTableInfoDTO.getTable();
                 QueryProvider qp = ProviderFactory.getQueryProvider(ds.getType());
 
+                //拼接查询语句，包含SQL格式化，比如将某个字段，由字符串类型转为数值类型
                 datasourceRequest.setQuery(
                         qp.createQueryTableWithPage(table, fields, page, pageSize, realSize, false, ds, null, rowPermissionsTree));
 
@@ -637,6 +644,7 @@ public class DataSetTableService {
                 datasourceRequest.setPreviewData(true);
                 try {
                     datasourceRequest.setPageable(true);
+                    //读取数据，区分了不同数据库类型的实现（API ES JDBC）
                     data.addAll(datasourceProvider.getData(datasourceRequest));
                 } catch (Exception e) {
                     logger.error(e.getMessage());
@@ -689,7 +697,9 @@ public class DataSetTableService {
                 }
             }
 
-        } else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), DatasetType.SQL.name())) {
+        }
+        //SQL类型
+        else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), DatasetType.SQL.name())) {
             if (datasetTable.getMode() == 0) {
                 Datasource ds = datasourceMapper.selectByPrimaryKey(dataSetTableRequest.getDataSourceId());
                 if (ObjectUtils.isEmpty(ds)) {
@@ -758,7 +768,9 @@ public class DataSetTableService {
                     DEException.throwException(Translator.get("i18n_ds_error") + "->" + e.getMessage());
                 }
             }
-        } else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), "excel")) {
+        }
+        //excel类型
+        else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), "excel")) {
             if (!checkEngineTableIsExists(dataSetTableRequest.getId())) {
                 throw new RuntimeException(Translator.get("i18n_data_not_sync"));
             }
@@ -800,7 +812,9 @@ public class DataSetTableService {
                 syncStatus = dataSetTaskLogDTOS.get(0).getStatus();
             }
 
-        } else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), "custom")) {
+        } 
+        //custom类型
+        else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), "custom")) {
             if (datasetTable.getMode() == 0) {
                 Datasource ds = datasourceMapper.selectByPrimaryKey(dataSetTableRequest.getDataSourceId());
                 if (ObjectUtils.isEmpty(ds)) {
@@ -872,7 +886,9 @@ public class DataSetTableService {
                     DEException.throwException(Translator.get("i18n_ds_error") + "->" + e.getMessage());
                 }
             }
-        } else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), "union")) {
+        } 
+        //union关联类型
+        else if (StringUtils.equalsIgnoreCase(datasetTable.getType(), "union")) {
             if (datasetTable.getMode() == 0) {
                 Datasource ds = datasourceMapper.selectByPrimaryKey(dataSetTableRequest.getDataSourceId());
                 if (ObjectUtils.isEmpty(ds)) {
@@ -945,6 +961,7 @@ public class DataSetTableService {
         }
 
         List<Map<String, Object>> jsonArray = new ArrayList<>();
+        //数据脱敏
         if (CollectionUtils.isNotEmpty(data)) {
             jsonArray = data.stream().map(ele -> {
                 Map<String, Object> tmpMap = new HashMap<>();

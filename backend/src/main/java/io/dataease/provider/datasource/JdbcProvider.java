@@ -21,6 +21,7 @@ import io.dataease.plugins.datasource.query.QueryProvider;
 import io.dataease.provider.ProviderFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+
 import javax.annotation.Resource;
 import java.lang.reflect.Method;
 import java.sql.*;
@@ -259,9 +260,11 @@ public class JdbcProvider extends DefaultJdbcProvider {
         String targetCharset = "UTF-8";
         if (datasourceRequest != null && datasourceRequest.getDatasource().getType().equalsIgnoreCase("oracle")) {
             JdbcConfiguration jdbcConfiguration = new Gson().fromJson(datasourceRequest.getDatasource().getConfiguration(), JdbcConfiguration.class);
+            //字符集
             if (StringUtils.isNotEmpty(jdbcConfiguration.getCharset()) && !jdbcConfiguration.getCharset().equalsIgnoreCase("Default")) {
                 charset = jdbcConfiguration.getCharset();
             }
+            //目标字符集
             if (StringUtils.isNotEmpty(jdbcConfiguration.getTargetCharset()) && !jdbcConfiguration.getTargetCharset().equalsIgnoreCase("Default")) {
                 targetCharset = jdbcConfiguration.getTargetCharset();
             }
@@ -288,6 +291,7 @@ public class JdbcProvider extends DefaultJdbcProvider {
                             row[j] = rs.getBlob(j + 1) == null ? "" : rs.getBlob(j + 1).toString();
                         } else {
                             if (charset != null && StringUtils.isNotEmpty(rs.getString(j + 1))) {
+                                //字符集 向 目标字符集转换
                                 String originStr = new String(rs.getString(j + 1).getBytes(charset), targetCharset);
                                 row[j] = new String(originStr.getBytes("UTF-8"), "UTF-8");
                             } else {
@@ -336,6 +340,9 @@ public class JdbcProvider extends DefaultJdbcProvider {
         return fieldList;
     }
 
+    /**
+     * 读取数据
+     */
     @Override
     public List<String[]> getData(DatasourceRequest dsr) throws Exception {
         List<String[]> list = new LinkedList<>();
@@ -343,12 +350,19 @@ public class JdbcProvider extends DefaultJdbcProvider {
         JdbcConfiguration jdbcConfiguration = new Gson().fromJson(dsr.getDatasource().getConfiguration(), JdbcConfiguration.class);
         int queryTimeout = jdbcConfiguration.getQueryTimeout() > 0 ? jdbcConfiguration.getQueryTimeout() : 0;
         //执行sql 查询
-        try (Connection connection = getConnectionFromPool(dsr);
-             Statement stat = getStatement(connection, queryTimeout);
-             ResultSet rs = stat.executeQuery(dsr.getQuery())) {
+
+        try (
+                //获取数据库连接（区分直接获取，或者从连接池获取）
+                Connection connection = getConnectionFromPool(dsr);
+                Statement stat = getStatement(connection, queryTimeout);
+                //执行查询，获取结果
+                ResultSet rs = stat.executeQuery(dsr.getQuery())) {
             //解析数据查询结果
             list = getDataResult(rs, dsr);
-            if (dsr.isPageable() && (dsr.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.sqlServer.name()) || dsr.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.db2.name()))) {
+
+            //sqlServer db2数据库
+            if (dsr.isPageable() && (dsr.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.sqlServer.name())
+                    || dsr.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.db2.name()))) {
                 Integer realSize = dsr.getPage() * dsr.getPageSize() < list.size() ? dsr.getPage() * dsr.getPageSize() : list.size();
                 list = list.subList((dsr.getPage() - 1) * dsr.getPageSize(), realSize);
             }
@@ -361,12 +375,20 @@ public class JdbcProvider extends DefaultJdbcProvider {
         return list;
     }
 
+    /**
+     * 连接测试，检查数据库连接状态
+     */
     @Override
     public String checkStatus(DatasourceRequest datasourceRequest) throws Exception {
+        //获取测试SQL
         String queryStr = getTablesSql(datasourceRequest);
         JdbcConfiguration jdbcConfiguration = new Gson().fromJson(datasourceRequest.getDatasource().getConfiguration(), JdbcConfiguration.class);
+        //超时时间
         int queryTimeout = jdbcConfiguration.getQueryTimeout() > 0 ? jdbcConfiguration.getQueryTimeout() : 0;
-        try (Connection con = getConnection(datasourceRequest); Statement statement = getStatement(con, queryTimeout); ResultSet resultSet = statement.executeQuery(queryStr)) {
+        //从连接池里，获取数据库连接
+        try (Connection con = getConnection(datasourceRequest);
+             Statement statement = getStatement(con, queryTimeout);
+             ResultSet resultSet = statement.executeQuery(queryStr)) {
         } catch (Exception e) {
             LogUtil.error("Datasource is invalid: " + datasourceRequest.getDatasource().getName(), e);
             io.dataease.plugins.common.exception.DataEaseException.throwException(e.getMessage());
@@ -374,10 +396,14 @@ public class JdbcProvider extends DefaultJdbcProvider {
         return "Success";
     }
 
+    /**
+     * 直接使用驱动类来获取连接，不是通过连接池
+     * */
     @Override
     public Connection getConnection(DatasourceRequest datasourceRequest) throws Exception {
         String username = null;
         String password = null;
+        //驱动类名
         String defaultDriver = null;
         String jdbcurl = null;
         String customDriver = null;
@@ -395,6 +421,7 @@ public class JdbcProvider extends DefaultJdbcProvider {
                 MysqlConfiguration mysqlConfiguration = new Gson().fromJson(datasourceRequest.getDatasource().getConfiguration(), MysqlConfiguration.class);
                 username = mysqlConfiguration.getUsername();
                 password = mysqlConfiguration.getPassword();
+                //驱动类名
                 defaultDriver = "com.mysql.jdbc.Driver";
                 jdbcurl = mysqlConfiguration.getJdbc();
                 customDriver = mysqlConfiguration.getCustomDriver();
@@ -508,14 +535,18 @@ public class JdbcProvider extends DefaultJdbcProvider {
         Connection conn;
         String driverClassName;
         ExtendedJdbcClassLoader jdbcClassLoader;
+        //默认的驱动
         if (isDefaultClassLoader(customDriver)) {
             driverClassName = defaultDriver;
             jdbcClassLoader = extendedJdbcClassLoader;
-        } else {
+        }
+        //自定义的驱动
+        else {
             if (deDriver == null) {
                 deDriver = deDriverMapper.selectByPrimaryKey(customDriver);
             }
             driverClassName = deDriver.getDriverClass();
+            //自定义驱动
             jdbcClassLoader = getCustomJdbcClassLoader(deDriver);
         }
 
@@ -630,6 +661,9 @@ public class JdbcProvider extends DefaultJdbcProvider {
         return jdbcConfiguration;
     }
 
+    /**
+     * 检查是否存在指定数据库
+     */
     @Override
     public String getTablesSql(DatasourceRequest datasourceRequest) throws Exception {
         DatasourceTypes datasourceType = DatasourceTypes.valueOf(datasourceRequest.getDatasource().getType());
@@ -639,7 +673,8 @@ public class JdbcProvider extends DefaultJdbcProvider {
             case mariadb:
             case TiDB:
                 JdbcConfiguration jdbcConfiguration = new Gson().fromJson(datasourceRequest.getDatasource().getConfiguration(), JdbcConfiguration.class);
-                return String.format("SELECT TABLE_NAME,TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '%s' ;", jdbcConfiguration.getDataBase());
+                return String.format("SELECT TABLE_NAME,TABLE_COMMENT FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA = '%s' ;",
+                        jdbcConfiguration.getDataBase());
             case engine_doris:
             case ds_doris:
             case StarRocks:
