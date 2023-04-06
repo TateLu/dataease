@@ -187,6 +187,7 @@ public class ExtractDataService {
                     createEngineTable(TableUtils.tableName(datasetTableId), datasetTableFields);
                     createEngineTable(TableUtils.tmpName(TableUtils.tableName(datasetTableId)), datasetTableFields);
                     Long execTime = System.currentTimeMillis();
+                    //区分简单模式、非简单模式
                     if (!engineService.isSimpleMode()) {
                         generateTransFile("all_scope", datasetTable, datasource, datasetTableFields, null);
                         generateJobFile("all_scope", datasetTable, datasetTableFields.stream().map(DatasetTableField::getDataeaseName).collect(Collectors.joining(",")));
@@ -528,7 +529,9 @@ public class ExtractDataService {
         }
 
     }
-
+    /**
+     * 数据入库
+     * */
     private void extractDataForSimpleMode(String extractType, String datasetId, List<String[]> dataList) throws Exception {
         String tableName;
         switch (extractType) {
@@ -703,15 +706,20 @@ public class ExtractDataService {
         return datasetTableTaskLog;
     }
 
+    /**
+     * 读取之前备份的文件，导入数据库
+     * */
     private void extractExcelDataForSimpleMode(DatasetTable datasetTable, String extractType) throws Exception {
         List<String[]> data = new ArrayList<>();
         DataTableInfoDTO dataTableInfoDTO = new Gson().fromJson(datasetTable.getInfo(), DataTableInfoDTO.class);
         List<ExcelSheetData> excelSheetDataList = dataTableInfoDTO.getExcelSheetDataList();
+        //读取之前备份的文件，一次性读取出所有记录到内存
         for (ExcelSheetData excelSheetData : excelSheetDataList) {
             String suffix = excelSheetData.getPath().substring(excelSheetData.getPath().lastIndexOf(".") + 1);
             List<ExcelSheetData> totalSheets = new ArrayList<>();
             if (StringUtils.equalsIgnoreCase(suffix, "xls")) {
                 ExcelXlsReader excelXlsReader = new ExcelXlsReader();
+
                 excelXlsReader.process(new FileInputStream(excelSheetData.getPath()));
                 totalSheets = excelXlsReader.totalSheets;
             }
@@ -731,6 +739,7 @@ public class ExtractDataService {
                 }
             }
         }
+        //数据入库
         extractDataForSimpleMode(extractType, datasetTable.getId(), data);
     }
 

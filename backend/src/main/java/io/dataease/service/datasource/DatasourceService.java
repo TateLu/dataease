@@ -108,7 +108,7 @@ public class DatasourceService {
         if (!types().stream().map(DataSourceType::getType).collect(Collectors.toList()).contains(datasource.getType())) {
             throw new Exception("Datasource type not supported.");
         }
-
+        //get a datasource provider impl
         Provider datasourceProvider = ProviderFactory.getProvider(datasource.getType());
         datasourceProvider.checkConfiguration(datasource);
 
@@ -118,8 +118,17 @@ public class DatasourceService {
         datasource.setUpdateTime(currentTimeMillis);
         datasource.setCreateTime(currentTimeMillis);
         datasource.setCreateBy(String.valueOf(AuthUtils.getUser().getUsername()));
+
+        //1  check datasource config is valid or not
         checkAndUpdateDatasourceStatus(datasource);
+
+        //2 save dataset configuration information, including its  status which has been checked
         datasourceMapper.insertSelective(datasource);
+
+        /**
+         * 3 add connection to pool
+         * including check datasource's status
+         * */
         handleConnectionPool(datasource, "add");
         sysAuthService.copyAuth(datasource.getId(), SysAuthConstants.AUTH_SOURCE_TYPE_DATASOURCE);
         return datasource;
@@ -134,6 +143,10 @@ public class DatasourceService {
         handleConnectionPool(datasource, type);
     }
 
+    /**
+     *  add， edit a datasource
+     *  in async
+     * */
     public void handleConnectionPool(Datasource datasource, String type) {
         commonThreadPool.addTask(() -> {
             try {
@@ -386,10 +399,11 @@ public class DatasourceService {
         Provider datasourceProvider = ProviderFactory.getProvider(ds.getType());
         DatasourceRequest datasourceRequest = new DatasourceRequest();
         datasourceRequest.setDatasource(ds);
+        //check datasource status
         if (!ds.getType().equalsIgnoreCase(DatasetType.API.name())) {
             datasourceProvider.checkStatus(datasourceRequest);
         }
-
+        //get tables
         List<TableDesc> tables = datasourceProvider.getTables(datasourceRequest);
 
         // 获取当前数据源下的db、api类型数据集
@@ -496,6 +510,9 @@ public class DatasourceService {
         return datasourceMapper.selectByExampleWithBLOBs(example);
     }
 
+    /**
+     * check datasource config is valid or not
+     * */
     private void checkAndUpdateDatasourceStatus(Datasource datasource) {
         try {
             Provider datasourceProvider = ProviderFactory.getProvider(datasource.getType());

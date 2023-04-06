@@ -1,5 +1,7 @@
 package io.dataease.controller.chart;
 
+import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
 import io.dataease.auth.annotation.DePermission;
 import io.dataease.auth.annotation.DePermissionProxy;
@@ -92,9 +94,11 @@ public class ChartViewController {
     @PostMapping("/getData/{id}/{panelId}")
     public ChartViewDTO getData(@PathVariable String id, @PathVariable String panelId,
                                 @RequestBody ChartExtRequest requestList) throws Exception {
-        if(id.equals("aa2b2ab3-1392-4410-9c59-4047e566d74a")){
-            return chartViewService.getData(id, requestList);
-        }
+        //if(id.equals("aa2b2ab3-1392-4410-9c59-4047e566d74a")){
+        //    return chartViewService.getData(id, requestList);
+        //}
+        System.out.println(StrUtil.format("/getData/{id}/{panelId} chart {} panel {}",id,panelId));
+        System.out.println(JSONUtil.toJsonStr(requestList));
         return chartViewService.getData(id, requestList);
     }
 

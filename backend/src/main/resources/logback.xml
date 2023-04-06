@@ -11,7 +11,7 @@
 	<appender name="debugAppender"
 			  class="ch.qos.logback.core.rolling.RollingFileAppender">
 		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-			<level>DEBUG</level>
+			<level>INFO</level>
 			<onMatch>ACCEPT</onMatch>
 			<onMismatch>DENY</onMismatch>
 		</filter>
@@ -101,7 +101,7 @@
 
 	<appender name="consoleAsyncAppender" class="ch.qos.logback.classic.AsyncAppender">
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>DEBUG</level>
+			<level>INFO</level>
 		</filter>
 		<queueSize>10000</queueSize>
 		<appender-ref ref="console" />
@@ -109,7 +109,7 @@
 
 	<appender name="debugAsyncAppender" class="ch.qos.logback.classic.AsyncAppender">
 		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-			<level>DEBUG</level>
+			<level>INFO</level>
 		</filter>
 		<queueSize>10000</queueSize>
 		<appender-ref ref="debugAppender" />

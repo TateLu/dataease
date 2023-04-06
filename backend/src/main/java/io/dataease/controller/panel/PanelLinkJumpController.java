@@ -1,19 +1,18 @@
 package io.dataease.controller.panel;
 
+import cn.hutool.json.JSONUtil;
 import com.github.xiaoymin.knife4j.annotations.ApiSupport;
-
 import io.dataease.auth.annotation.DePermissionProxy;
-import io.dataease.plugins.common.base.domain.DatasetTableField;
 import io.dataease.dto.PermissionProxy;
 import io.dataease.dto.panel.linkJump.PanelLinkJumpBaseRequest;
 import io.dataease.dto.panel.linkJump.PanelLinkJumpBaseResponse;
 import io.dataease.dto.panel.linkJump.PanelLinkJumpDTO;
+import io.dataease.plugins.common.base.domain.DatasetTableField;
 import io.dataease.service.panel.PanelLinkJumpService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import springfox.documentation.annotations.ApiIgnore;
-
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.annotation.Resource;
 import java.util.List;
@@ -41,13 +40,19 @@ public class PanelLinkJumpController {
     @ApiOperation("根据仪表板ID和视图ID获取跳转信息")
     @GetMapping("/queryWithViewId/{panelId}/{viewId}")
     public PanelLinkJumpDTO queryWithViewId(@PathVariable String panelId, @PathVariable String viewId) {
-        return panelLinkJumpService.queryWithView(panelId, viewId);
+        PanelLinkJumpDTO panelLinkJumpDTO = panelLinkJumpService.queryWithView(panelId, viewId);
+        System.out.println("/queryWithViewId/{panelId}/{viewId}");
+        System.out.println(JSONUtil.toJsonStr(panelLinkJumpDTO));
+        return panelLinkJumpDTO;
     }
 
     @ApiOperation("根据仪表板ID获取跳转信息")
     @GetMapping("/queryPanelJumpInfo/{panelId}")
     public PanelLinkJumpBaseResponse queryPanelJumpInfo(@PathVariable String panelId) {
-        return panelLinkJumpService.queryPanelJumpInfo(panelId);
+        PanelLinkJumpBaseResponse panelLinkJumpBaseResponse = panelLinkJumpService.queryPanelJumpInfo(panelId);
+        System.out.println("/queryPanelJumpInfo/{panelId}");
+        System.out.println(JSONUtil.toJsonStr(panelLinkJumpBaseResponse));
+        return panelLinkJumpBaseResponse;
     }
 
     @ApiIgnore
@@ -68,6 +73,9 @@ public class PanelLinkJumpController {
     @ApiOperation("获取仪表板目标仪表板跳转联动信息")
     @PostMapping("/queryTargetPanelJumpInfo")
     public PanelLinkJumpBaseResponse queryTargetPanelJumpInfo(@RequestBody PanelLinkJumpBaseRequest request) {
-        return panelLinkJumpService.queryTargetPanelJumpInfo(request);
+        PanelLinkJumpBaseResponse panelLinkJumpBaseResponse = panelLinkJumpService.queryTargetPanelJumpInfo(request);
+        System.out.println("queryTargetPanelJumpInfo");
+        System.out.println(JSONUtil.toJsonStr(panelLinkJumpBaseResponse));
+        return  panelLinkJumpBaseResponse;
     }
 }

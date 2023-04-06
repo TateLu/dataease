@@ -90,6 +90,7 @@ public class JdbcProvider extends DefaultJdbcProvider {
             }
             DatabaseMetaData databaseMetaData = connection.getMetaData();
             String tableNamePattern = datasourceRequest.getTable();
+            //distinguish different driver version
             if (datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.mysql.name())) {
                 if (databaseMetaData.getDriverMajorVersion() < 8) {
                     tableNamePattern = String.format(MySQLConstants.KEYWORD_TABLE, tableNamePattern);
@@ -100,7 +101,8 @@ public class JdbcProvider extends DefaultJdbcProvider {
                 String tableName = resultSet.getString("TABLE_NAME");
                 String database;
                 String schema = resultSet.getString("TABLE_SCHEM");
-                if (datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.pg.name()) || datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.ck.name())
+                if (datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.pg.name())
+                        || datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.ck.name())
                         || datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.impala.name())) {
                     database = resultSet.getString("TABLE_SCHEM");
                 } else {
@@ -277,6 +279,7 @@ public class JdbcProvider extends DefaultJdbcProvider {
             for (int j = 0; j < columnCount; j++) {
                 //解析字段类型，设置mapping值
                 int columnType = metaData.getColumnType(j + 1);
+                String columTypeName = metaData.getColumnTypeName(j+1);
                 switch (columnType) {
                     case Types.DATE:
                         if (rs.getDate(j + 1) != null) {
@@ -549,12 +552,16 @@ public class JdbcProvider extends DefaultJdbcProvider {
             //自定义驱动
             jdbcClassLoader = getCustomJdbcClassLoader(deDriver);
         }
-
+        /**
+         *  无法获取默认驱动类 driverClassName = oracle.jdbc.driver.OracleDriver
+         * */
         Driver driverClass = (Driver) jdbcClassLoader.loadClass(driverClassName).newInstance();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
             Thread.currentThread().setContextClassLoader(jdbcClassLoader);
+            System.out.println("jdbcurl "+ jdbcurl);
             conn = driverClass.connect(jdbcurl, props);
+
         } catch (Exception e) {
             e.printStackTrace();
             throw e;

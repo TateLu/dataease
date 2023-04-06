@@ -178,47 +178,62 @@ public class MysqlQueryProvider extends QueryProvider {
         List<SQLObj> xFields = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(fields)) {
             for (int i = 0; i < fields.size(); i++) {
-                DatasetTableField f = fields.get(i);
+                DatasetTableField field = fields.get(i);
+                //原字段名， 例如 t_a_0.`column_1`
                 String originField;
-                if (ObjectUtils.isNotEmpty(f.getExtField()) && f.getExtField() == 2) {
+                if (ObjectUtils.isNotEmpty(field.getExtField()) && field.getExtField() == 2) {
                     // 解析origin name中有关联的字段生成sql表达式
-                    originField = calcFieldRegex(f.getOriginName(), tableObj);
-                } else if (ObjectUtils.isNotEmpty(f.getExtField()) && f.getExtField() == 1) {
-                    originField = String.format(MySQLConstants.KEYWORD_FIX, tableObj.getTableAlias(), f.getOriginName());
+                    originField = calcFieldRegex(field.getOriginName(), tableObj);
+                } else if (ObjectUtils.isNotEmpty(field.getExtField()) && field.getExtField() == 1) {
+                    originField = String.format(MySQLConstants.KEYWORD_FIX, tableObj.getTableAlias(), field.getOriginName());
                 } else {
-                    originField = String.format(MySQLConstants.KEYWORD_FIX, tableObj.getTableAlias(), f.getOriginName());
+                    originField = String.format(MySQLConstants.KEYWORD_FIX, tableObj.getTableAlias(), field.getOriginName());
                 }
                 String fieldAlias = String.format(SQLConstants.FIELD_ALIAS_X_PREFIX, i);
                 String fieldName = "";
-                // 处理横轴字段
-                if (f.getDeExtractType() == 1) {
-                    if (f.getDeType() == 2 || f.getDeType() == 3) {
+
+                /**
+                 * 结合字段的sql类型、dataease类型，来格式化字段的值
+                 * 格式化结果都是字符串类型
+                 * */
+                //如果是要解析为日期类型
+                if (field.getDeExtractType() == 1) {
+                    /**
+                     * 根据dataease 的不同业务类型，做处理  {@link DeTypeConstants}
+                     * */
+                    //如果字段的dataease类型 是 INT or FLOAT
+                    if (field.getDeType() == 2 || field.getDeType() == 3) {
                         fieldName = String.format(MySQLConstants.UNIX_TIMESTAMP, originField) + "*1000";
                     } else {
-                        if (f.getType().equalsIgnoreCase("YEAR")) {
+                        //如果字段的数据库类型为 YEAR TIME 其他类型
+                        if (field.getType().equalsIgnoreCase("YEAR")) {
                             fieldName = String.format(MySQLConstants.DATE_FORMAT, "CONCAT(" + originField + ",'-01-01')", MySQLConstants.DEFAULT_DATE_FORMAT);
-                        } else if (f.getType().equalsIgnoreCase("TIME")) {
+                        } else if (field.getType().equalsIgnoreCase("TIME")) {
                             fieldName = String.format(MySQLConstants.DATE_FORMAT, "CONCAT('1970-01-01', " + originField + ")", MySQLConstants.DEFAULT_DATE_FORMAT);
                         } else {
                             fieldName = String.format(MySQLConstants.DATE_FORMAT, originField, MySQLConstants.DEFAULT_DATE_FORMAT);
                         }
                     }
-                } else if (f.getDeExtractType() == 0) {
-                    if (f.getDeType() == 2) {
+                }
+                //要解析为字符串类型
+                else if (field.getDeExtractType() == 0) {
+                    if (field.getDeType() == 2) {
                         fieldName = String.format(MySQLConstants.CAST, originField, MySQLConstants.DEFAULT_INT_FORMAT);
-                    } else if (f.getDeType() == 3) {
+                    } else if (field.getDeType() == 3) {
                         fieldName = String.format(MySQLConstants.CAST, originField, MySQLConstants.DEFAULT_FLOAT_FORMAT);
-                    } else if (f.getDeType() == 1) {
-                        fieldName = StringUtils.isEmpty(f.getDateFormat()) ? String.format(MySQLConstants.STR_TO_DATE, originField, MysqlConstants.DEFAULT_DATE_FORMAT) :
-                                String.format(MySQLConstants.DATE_FORMAT, String.format(MySQLConstants.STR_TO_DATE, originField, f.getDateFormat()), MySQLConstants.DEFAULT_DATE_FORMAT);
+                    } else if (field.getDeType() == 1) {
+                        fieldName = StringUtils.isEmpty(field.getDateFormat()) ? String.format(MySQLConstants.STR_TO_DATE, originField, MysqlConstants.DEFAULT_DATE_FORMAT) :
+                                String.format(MySQLConstants.DATE_FORMAT, String.format(MySQLConstants.STR_TO_DATE, originField, field.getDateFormat()), MySQLConstants.DEFAULT_DATE_FORMAT);
                     } else {
                         fieldName = originField;
                     }
-                } else {
-                    if (f.getDeType() == 1) {
+                }
+                //要解析为其他类型
+                else {
+                    if (field.getDeType() == 1) {
                         String cast = String.format(MySQLConstants.CAST, originField, MySQLConstants.DEFAULT_INT_FORMAT) + "/1000";
                         fieldName = String.format(MySQLConstants.FROM_UNIXTIME, cast, MySQLConstants.DEFAULT_DATE_FORMAT);
-                    } else if (f.getDeType() == 2) {
+                    } else if (field.getDeType() == 2) {
                         fieldName = String.format(MySQLConstants.CAST, originField, MySQLConstants.DEFAULT_INT_FORMAT);
                     } else {
                         fieldName = originField;

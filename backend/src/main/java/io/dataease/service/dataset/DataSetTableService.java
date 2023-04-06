@@ -187,6 +187,11 @@ public class DataSetTableService {
         }
     }
 
+    /**
+     * 保存excel
+     *
+     * Propagation.NOT_SUPPORTED 以非事务方式运行，如果当前存在事务，则把当前事务挂起。
+     * */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @DeCleaner(value = DePermissionType.DATASET, key = "sceneId")
     public List<DatasetTable> saveExcel(DataSetTableRequest datasetTable) {
@@ -194,6 +199,7 @@ public class DataSetTableService {
 
         if (StringUtils.isEmpty(datasetTable.getId())) {
             List<DatasetTable> list = new ArrayList<>();
+            //如果是合并sheet
             if (datasetTable.isMergeSheet()) {
                 Map<String, List<ExcelSheetData>> map = datasetTable.getSheets().stream()
                         .collect(Collectors.groupingBy(ExcelSheetData::getFieldsMd5));
@@ -238,10 +244,14 @@ public class DataSetTableService {
                     list.add(sheetTable);
                     DeLogUtils.save(SysLogConstants.OPERATE_TYPE.CREATE, SysLogConstants.SOURCE_TYPE.DATASET, datasetTable.getId(), datasetTable.getSceneId(), null, null);
                 }
+                //数据读取，提交到异步线程
                 datasetIdList.forEach(datasetId -> commonThreadPool.addTask(() ->
                         extractDataService.extractExcelData(datasetId, "all_scope", "初始导入",
                                 null, datasetIdList)));
-            } else {
+            }
+            //默认，不是合并sheet
+            else {
+                //校验字段信息
                 for (ExcelSheetData sheet : datasetTable.getSheets()) {
                     String[] fieldArray = sheet.getFields().stream().map(TableField::getFieldName)
                             .toArray(String[]::new);
@@ -265,13 +275,16 @@ public class DataSetTableService {
                     DataTableInfoDTO info = new DataTableInfoDTO();
                     info.setExcelSheetDataList(excelSheetDataList);
                     sheetTable.setInfo(new Gson().toJson(info));
+                    //新建一条记录，记录本次数据导入任务
                     datasetTableMapper.insert(sheetTable);
                     sysAuthService.copyAuth(sheetTable.getId(), SysAuthConstants.AUTH_SOURCE_TYPE_DATASET);
+                    //新建表字段，每个字段作为一条记录
                     saveExcelTableField(sheetTable.getId(), sheet.getFields(), true);
                     datasetIdList.add(sheetTable.getId());
                     list.add(sheetTable);
                     DeLogUtils.save(SysLogConstants.OPERATE_TYPE.MODIFY, SysLogConstants.SOURCE_TYPE.DATASET, datasetTable.getId(), datasetTable.getSceneId(), null, null);
                 }
+                //数据读取，提交到异步线程
                 datasetIdList.forEach(datasetId -> commonThreadPool.addTask(() ->
                         extractDataService.extractExcelData(datasetId, "all_scope", "初始导入",
                                 null, datasetIdList)));
@@ -306,7 +319,7 @@ public class DataSetTableService {
         info.setExcelSheetDataList(excelSheetDataList);
         datasetTable.setInfo(new Gson().toJson(info));
         datasetTableMapper.updateByPrimaryKeySelective(datasetTable);
-        // 替換時，先不刪除旧字段；同步成功后再删除
+        // 替换时，先不刪除旧字段；同步成功后再删除
         if (datasetTable.getEditType() == 0) {
             commonThreadPool.addTask(() -> extractDataService.extractExcelData(datasetTable.getId(), "all_scope", "替换",
                     saveExcelTableField(datasetTable.getId(), datasetTable.getSheets().get(0).getFields(), false),
@@ -632,10 +645,30 @@ public class DataSetTableService {
                 String table = dataTableInfoDTO.getTable();
                 QueryProvider qp = ProviderFactory.getQueryProvider(ds.getType());
 
-                //拼接查询语句，包含SQL格式化，比如将某个字段，由字符串类型转为数值类型
+
+                /**
+                 * 拼接查询语句，包含SQL格式化，比如将某个字段，由字符串类型转为数值类型
+                 *
+                 * @see  DatasourceRequest#query 字段信息如下
+                 *
+                 * SELECT
+                 *     DATE_FORMAT(t_a_0.`column_1`,'%Y-%m-%d %H:%i:%S') AS f_ax_0,
+                 *     t_a_0.`column_2` AS f_ax_1,
+                 *     t_a_0.`column_3` AS f_ax_2,
+                 *     t_a_0.`column_4` AS f_ax_3,
+                 *     t_a_0.`column_5` AS f_ax_4,
+                 *     t_a_0.`column_6` AS f_ax_5,
+                 *     t_a_0.`column_7` AS f_ax_6,
+                 *     t_a_0.`column_8` AS f_ax_7,
+                 *     t_a_0.`column_9` AS f_ax_8,
+                 *     DATE_FORMAT(t_a_0.`column_0`,'%Y-%m-%d %H:%i:%S') AS f_ax_9
+                 * FROM
+                 *     `demo_test_01`   t_a_0
+                 *  LIMIT 0,1000
+                 * */
                 datasourceRequest.setQuery(
                         qp.createQueryTableWithPage(table, fields, page, pageSize, realSize, false, ds, null, rowPermissionsTree));
-
+                System.out.printf("查询的SQL语句为 %s %n",datasourceRequest.getQuery());
                 map.put("sql", java.util.Base64.getEncoder().encodeToString(datasourceRequest.getQuery().getBytes()));
                 datasourceRequest.setPage(page);
                 datasourceRequest.setFetchSize(Integer.parseInt(dataSetTableRequest.getRow()));
@@ -644,7 +677,11 @@ public class DataSetTableService {
                 datasourceRequest.setPreviewData(true);
                 try {
                     datasourceRequest.setPageable(true);
-                    //读取数据，区分了不同数据库类型的实现（API ES JDBC）
+                    /**
+                     * 1 读取数据，区分了不同数据库类型的实现（API ES JDBC）
+                     * 2  @see  DatasourceRequest#query 字段 是包含格式化信息的
+                     * 3 返回的结果,每个字段都是 String 类型
+                     * */
                     data.addAll(datasourceProvider.getData(datasourceRequest));
                 } catch (Exception e) {
                     logger.error(e.getMessage());
@@ -652,6 +689,7 @@ public class DataSetTableService {
                 }
 
                 try {
+
                     datasourceRequest.setQuery(qp.createQueryTableWithLimit(table, fields,
                             Integer.valueOf(dataSetTableRequest.getRow()), false, ds, null, rowPermissionsTree));
                     datasourceRequest.setPageable(false);
@@ -1853,6 +1891,9 @@ public class DataSetTableService {
         }
     }
 
+    /**
+     * 新建表字段，每个字段作为一条记录
+     * */
     public List<DatasetTableField> saveExcelTableField(String datasetTableId, List<TableField> fields, boolean insert) {
         List<DatasetTableField> datasetTableFields = new ArrayList<>();
         if (CollectionUtils.isNotEmpty(fields)) {
@@ -2277,7 +2318,7 @@ public class DataSetTableService {
 
     public ExcelFileData excelSaveAndParse(MultipartFile file, String tableId, Integer editType) throws Exception {
         String filename = file.getOriginalFilename();
-        // parse file
+        // parse file && read file data
         List<ExcelSheetData> excelSheetDataList = parseExcel(filename, file.getInputStream(), true);
         List<ExcelSheetData> returnSheetDataList = new ArrayList<>();
 
@@ -2347,7 +2388,7 @@ public class DataSetTableService {
         returnSheetDataList = returnSheetDataList.stream()
                 .filter(excelSheetData -> CollectionUtils.isNotEmpty(excelSheetData.getFields()))
                 .collect(Collectors.toList());
-        // save file
+        // save file to local
         String excelId = UUID.randomUUID().toString();
         String filePath = saveFile(file, excelId);
         ExcelFileData excelFileData = new ExcelFileData();
@@ -2373,7 +2414,9 @@ public class DataSetTableService {
         return excelFileData;
     }
 
-    //解析不同类型文件，返回文件内容
+    /**
+     * 解析不同类型文件，返回文件内容
+     * */
     private List<ExcelSheetData> parseExcel(String filename, InputStream inputStream, boolean isPreview)
             throws Exception {
         List<ExcelSheetData> excelSheetDataList = new ArrayList<>();
@@ -2390,7 +2433,7 @@ public class DataSetTableService {
             excelXlsxReader.process(inputStream);
             excelSheetDataList = excelXlsxReader.totalSheets;
         }
-
+        //csv文件，直接读，按行读取
         if (StringUtils.equalsIgnoreCase(suffix, "csv")) {
             List<TableField> fields = new ArrayList<>();
             BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
