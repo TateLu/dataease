@@ -2068,6 +2068,7 @@ public class DataSetTableService {
         }
         if (CollectionUtils.isNotEmpty(fields)) {
             List<String> originNameList = new ArrayList<>();
+            //更新 dataset_table_field 表
             for (int i = 0; i < fields.size(); i++) {
                 TableField field = fields.get(i);
                 originNameList.add(field.getFieldName());

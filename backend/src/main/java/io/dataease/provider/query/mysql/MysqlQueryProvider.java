@@ -194,7 +194,7 @@ public class MysqlQueryProvider extends QueryProvider {
 
                 /**
                  * 结合字段的sql类型、dataease类型，来格式化字段的值
-                 * 格式化结果都是字符串类型
+                 * 格式化结果返回的都是字符串类型
                  * */
                 //如果是要解析为日期类型
                 if (field.getDeExtractType() == 1) {
@@ -205,7 +205,7 @@ public class MysqlQueryProvider extends QueryProvider {
                     if (field.getDeType() == 2 || field.getDeType() == 3) {
                         fieldName = String.format(MySQLConstants.UNIX_TIMESTAMP, originField) + "*1000";
                     } else {
-                        //如果字段的数据库类型为 YEAR TIME 其他类型
+                        //如果字段的数据库原始类型为 YEAR TIME 其他类型
                         if (field.getType().equalsIgnoreCase("YEAR")) {
                             fieldName = String.format(MySQLConstants.DATE_FORMAT, "CONCAT(" + originField + ",'-01-01')", MySQLConstants.DEFAULT_DATE_FORMAT);
                         } else if (field.getType().equalsIgnoreCase("TIME")) {

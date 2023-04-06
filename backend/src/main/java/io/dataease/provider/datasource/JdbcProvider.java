@@ -310,32 +310,33 @@ public class JdbcProvider extends DefaultJdbcProvider {
         return list;
     }
 
-    private List<TableField> fetchResultField(ResultSet rs, DatasourceRequest datasourceRequest) throws Exception {
+    private List<TableField> fetchResultField(ResultSet resultSet, DatasourceRequest datasourceRequest) throws Exception {
         List<TableField> fieldList = new ArrayList<>();
-        ResultSetMetaData metaData = rs.getMetaData();
+        ResultSetMetaData metaData = resultSet.getMetaData();
         int columnCount = metaData.getColumnCount();
         for (int j = 0; j < columnCount; j++) {
-            String f = metaData.getColumnName(j + 1);
-            String l = StringUtils.isNotEmpty(metaData.getColumnLabel(j + 1)) ? metaData.getColumnLabel(j + 1) : f;
-            String t = metaData.getColumnTypeName(j + 1);
-            if (datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.hive.name()) && l.contains(".")) {
-                l = l.split("\\.")[1];
+            String columnName = metaData.getColumnName(j + 1);
+            String columnLabel = StringUtils.isNotEmpty(metaData.getColumnLabel(j + 1)) ? metaData.getColumnLabel(j + 1) : columnName;
+            String typeName = metaData.getColumnTypeName(j + 1);
+            if (datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.hive.name()) && columnLabel.contains(".")) {
+                columnLabel = columnLabel.split("\\.")[1];
             }
             TableField field = new TableField();
-            field.setFieldName(l);
-            field.setRemarks(l);
-            field.setFieldType(t);
+            field.setFieldName(columnLabel);
+            field.setRemarks(columnLabel);
+            //字段类型
+            field.setFieldType(typeName);
 
             if (datasourceRequest.getDatasource().getType().equalsIgnoreCase(DatasourceTypes.ck.name())) {
                 QueryProvider qp = ProviderFactory.getQueryProvider(datasourceRequest.getDatasource().getType());
-                field.setFieldSize(qp.transFieldSize(t));
+                field.setFieldSize(qp.transFieldSize(typeName));
             } else {
                 field.setFieldSize(metaData.getColumnDisplaySize(j + 1));
             }
-            if (t.equalsIgnoreCase("LONG")) {
+            if (typeName.equalsIgnoreCase("LONG")) {
                 field.setFieldSize(65533);
             } //oracle LONG
-            if (StringUtils.isNotEmpty(t) && t.toLowerCase().contains("date") && field.getFieldSize() < 50) {
+            if (StringUtils.isNotEmpty(typeName) && typeName.toLowerCase().contains("date") && field.getFieldSize() < 50) {
                 field.setFieldSize(50);
             }
             fieldList.add(field);
