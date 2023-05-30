@@ -309,6 +309,7 @@ public class MysqlQueryProvider extends QueryProvider {
                 .build();
         List<SQLObj> xFields = new ArrayList<>();
         List<SQLObj> xOrders = new ArrayList<>();
+        //维度字段
         if (CollectionUtils.isNotEmpty(xAxis)) {
             for (int i = 0; i < xAxis.size(); i++) {
                 ChartViewFieldDTO x = xAxis.get(i);
@@ -337,6 +338,7 @@ public class MysqlQueryProvider extends QueryProvider {
         List<SQLObj> yFields = new ArrayList<>();
         List<String> yWheres = new ArrayList<>();
         List<SQLObj> yOrders = new ArrayList<>();
+        //指标字段
         if (CollectionUtils.isNotEmpty(yAxis)) {
             for (int i = 0; i < yAxis.size(); i++) {
                 ChartViewFieldDTO y = yAxis.get(i);
@@ -1266,11 +1268,21 @@ public class MysqlQueryProvider extends QueryProvider {
         return list;
     }
 
+    /**
+     * 按照字段的数据类型
+     * 来处理聚合函数，sum avg count等
+     * */
     private SQLObj getYFields(ChartViewFieldDTO y, String originField, String fieldAlias) {
         String fieldName = "";
         if (StringUtils.equalsIgnoreCase(y.getOriginName(), "*")) {
             fieldName = MySQLConstants.AGG_COUNT;
-        } else if (SQLConstants.DIMENSION_TYPE.contains(y.getDeType())) {
+        }
+        /**
+         * 图表字段类型
+         * deType {@link DeTypeConstants}
+         * */
+        //日期、文本字段等非数字类型
+        else if (SQLConstants.DIMENSION_TYPE.contains(y.getDeType())) {
             if (StringUtils.equalsIgnoreCase(y.getSummary(), "count_distinct")) {
                 fieldName = String.format(MySQLConstants.AGG_FIELD, "COUNT", "DISTINCT " + originField);
             } else if (StringUtils.equalsIgnoreCase(y.getSummary(), "group_concat")) {
@@ -1278,7 +1290,12 @@ public class MysqlQueryProvider extends QueryProvider {
             } else {
                 fieldName = String.format(MySQLConstants.AGG_FIELD, y.getSummary(), originField);
             }
-        } else {
+        }
+        /**
+         * 数字类型
+         * 即使原字段类型是字符串，cast('abc' as Decimal(20,0))的结果也是数字
+         * */
+        else {
             if (StringUtils.equalsIgnoreCase(y.getSummary(), "avg") || StringUtils.containsIgnoreCase(y.getSummary(), "pop")) {
                 String cast = String.format(MySQLConstants.CAST, originField, y.getDeType() == 2 ? MySQLConstants.DEFAULT_INT_FORMAT : MySQLConstants.DEFAULT_FLOAT_FORMAT);
                 String agg = String.format(MySQLConstants.AGG_FIELD, y.getSummary(), cast);

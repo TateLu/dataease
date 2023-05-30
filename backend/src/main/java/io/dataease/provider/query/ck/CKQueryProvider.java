@@ -1294,7 +1294,9 @@ public class CKQueryProvider extends QueryProvider {
         String fieldName = "";
         if (StringUtils.equalsIgnoreCase(y.getOriginName(), "*")) {
             fieldName = CKConstants.AGG_COUNT;
-        } else if (SQLConstants.DIMENSION_TYPE.contains(y.getDeType())) {
+        }
+        //非数字类型
+        else if (SQLConstants.DIMENSION_TYPE.contains(y.getDeType())) {
             if (StringUtils.equalsIgnoreCase(y.getSummary(), "count_distinct")) {
                 fieldName = String.format(CKConstants.AGG_FIELD, "COUNT", "DISTINCT " + originField);
             } else if (StringUtils.equalsIgnoreCase(y.getSummary(), "group_concat")) {
@@ -1302,7 +1304,9 @@ public class CKQueryProvider extends QueryProvider {
             } else {
                 fieldName = String.format(CKConstants.AGG_FIELD, y.getSummary(), originField);
             }
-        } else {
+        }
+        //数字类型
+        else {
             if (StringUtils.equalsIgnoreCase(y.getSummary(), "avg") || StringUtils.containsIgnoreCase(y.getSummary(), "pop")) {
                 String cast = y.getDeType() == 2 ? String.format(CKConstants.toInt64, originField) : String.format(CKConstants.toFloat64, originField);
                 String agg = String.format(CKConstants.AGG_FIELD, y.getSummary(), cast);

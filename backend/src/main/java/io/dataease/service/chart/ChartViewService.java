@@ -902,8 +902,8 @@ public class ChartViewService {
         }
 
         String querySql = null;
-        long totalPage = 0l;
-        long totalItems = 0l;
+        long totalPage = 0L;
+        long totalItems = 0L;
         String totalPageSql = null;
         PageInfo pageInfo = new PageInfo();
         pageInfo.setGoPage(chartExtRequest.getGoPage());
@@ -934,6 +934,11 @@ public class ChartViewService {
                     querySql = qp.getSQLWithPage(true, dataTableInfoDTO.getTable(), xAxis, fieldCustomFilter, rowPermissionsTree, extFilterList, ds, view, pageInfo);
                     totalPageSql = qp.getResultCount(true, dataTableInfoDTO.getTable(), xAxis, fieldCustomFilter, rowPermissionsTree, extFilterList, ds, view);
                 } else {
+                    /**
+                     * 使用各种数据库的类型转换函数， 直接强转
+                     * 比如 mysql: cast('123qwe123' as Decimal(20,0)) -> 0
+                     *      clickhouse: toInt8OrZero('123qwe123') -> 0
+                     * */
                     querySql = qp.getSQL(dataTableInfoDTO.getTable(), xAxis, yAxis, fieldCustomFilter, rowPermissionsTree, extFilterList, ds, view);
                 }
             }
@@ -996,7 +1001,7 @@ public class ChartViewService {
                 totalItems = CollectionUtils.isEmpty(tmpData) ? 0 : Long.valueOf(tmpData.get(0)[0]);
                 totalPage = (totalItems / pageInfo.getPageSize()) + (totalItems % pageInfo.getPageSize() > 0 ? 1 : 0);
             }
-
+            //执行SQL，获取图表查询结果
             datasourceRequest.setQuery(querySql);
             data = datasourceProvider.getData(datasourceRequest);
             if (CollectionUtils.isNotEmpty(assistFields)) {
