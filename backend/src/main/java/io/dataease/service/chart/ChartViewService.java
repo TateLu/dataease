@@ -1072,16 +1072,17 @@ public class ChartViewService {
             if (ObjectUtils.isEmpty(compareCalc)) {
                 continue;
             }
-            if (StringUtils.isNotEmpty(compareCalc.getType())
-                    && !StringUtils.equalsIgnoreCase(compareCalc.getType(), "none")) {
+            if (StringUtils.isNotEmpty(compareCalc.getType()) && !StringUtils.equalsIgnoreCase(compareCalc.getType(), "none")) {
                 String compareFieldId = compareCalc.getField();// 选中字段
                 // 计算指标对应的下标
                 int dataIndex = 0;// 数据字段下标
                 if (StringUtils.containsIgnoreCase(view.getType(), "stack")) {
                     dataIndex = xAxis.size() + extStack.size() + i;
                 } else {
+                    //维度数目 + 指标的位置
                     dataIndex = xAxis.size() + i;
                 }
+                //如果是同环比类型
                 if (Arrays.asList(ChartConstants.M_Y).contains(compareCalc.getType())) {
                     String resultData = compareCalc.getResultData();// 数据设置
                     // 获取选中字段以及下标
@@ -1091,6 +1092,7 @@ public class ChartViewService {
                     }
                     int timeIndex = 0;// 时间字段下标
                     ChartViewFieldDTO timeField = null;
+                    //找出对应的时间字段下标 (checkedField 是使用到的数据集字段)
                     for (int j = 0; j < checkedField.size(); j++) {
                         if (StringUtils.equalsIgnoreCase(checkedField.get(j).getId(), compareFieldId)) {
                             timeIndex = j;
@@ -1107,8 +1109,10 @@ public class ChartViewService {
                         // 计算 同比/环比
                         // 1，处理当期数据；2，根据type计算上一期数据；3，根据resultData计算结果
                         Map<String, String> currentMap = new LinkedHashMap<>();
+                        //查询结果data
                         for (String[] item : data) {
                             String[] dimension = Arrays.copyOfRange(item, 0, checkedField.size());
+                            //拼接维度为key
                             currentMap.put(StringUtils.join(dimension, "-"), item[dataIndex]);
                         }
 
@@ -1117,11 +1121,12 @@ public class ChartViewService {
                             String cTime = item[timeIndex];
                             String cValue = item[dataIndex];
 
-                            // 获取计算后的时间，并且与所有维度拼接
+                            // 获取上一个时间，并且与所有维度拼接
                             String lastTime = calcLastTime(cTime, compareCalc.getType(), timeField.getDateStyle(), timeField.getDatePattern());
                             String[] dimension = Arrays.copyOfRange(item, 0, checkedField.size());
+                            //日期时间 替换为同环比的上一个日期 lastTime
                             dimension[timeIndex] = lastTime;
-
+                            //所有维度拼接，取出上一个时间的值
                             String lastValue = currentMap.get(StringUtils.join(dimension, "-"));
                             if (StringUtils.isEmpty(cValue) || StringUtils.isEmpty(lastValue)) {
                                 item[dataIndex] = null;
@@ -1375,6 +1380,9 @@ public class ChartViewService {
         return false;
     }
 
+    /**
+     * 计算同环比的上一个日期
+     * */
     private String calcLastTime(String cTime, String type, String dateStyle, String datePattern) {
         try {
             String lastTime = null;
