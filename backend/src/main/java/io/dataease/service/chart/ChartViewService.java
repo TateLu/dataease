@@ -939,6 +939,7 @@ public class ChartViewService {
                      * 比如 mysql: cast('123qwe123' as Decimal(20,0)) -> 0
                      *      clickhouse: toInt8OrZero('123qwe123') -> 0
                      * */
+                    //图表查询 生成sql
                     querySql = qp.getSQL(dataTableInfoDTO.getTable(), xAxis, yAxis, fieldCustomFilter, rowPermissionsTree, extFilterList, ds, view);
                 }
             }

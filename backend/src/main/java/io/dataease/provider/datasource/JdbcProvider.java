@@ -550,12 +550,10 @@ public class JdbcProvider extends DefaultJdbcProvider {
                 deDriver = deDriverMapper.selectByPrimaryKey(customDriver);
             }
             driverClassName = deDriver.getDriverClass();
-            //自定义驱动
+            //自定义ClassLoader ， 去加载指定位置的jdbc驱动类
             jdbcClassLoader = getCustomJdbcClassLoader(deDriver);
         }
-        /**
-         *  无法获取默认驱动类 driverClassName = oracle.jdbc.driver.OracleDriver
-         * */
+
         Driver driverClass = (Driver) jdbcClassLoader.loadClass(driverClassName).newInstance();
         ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
         try {
